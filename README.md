@@ -4,7 +4,10 @@ A small single-window desktop app (Python + tkinter) that installs, runs, update
 uninstalls [resume-writer-yck](https://github.com/Svarpy/resume-writer-yck).
 
 - **Install:** clones the repo (pure-Python `dulwich`, no git needed), creates `.venv`,
-  runs `pip install -r requirements.txt`, then asks you to drop your `.env` into the code folder.
+  runs `pip install -r requirements.txt`, then opens **Settings**.
+- **Settings (⚙, top-right, only when installed):** edit environment variables as key/value rows
+  (prefilled from `.env.example` on first run), add new ones, and Save. The launcher writes
+  `.env` into the install folder for you — no copying files around. Values are masked by default.
 - **Run Server / Run GUI:** `python -m resume_server` / `python -m resume_gui`, always with the
   venv's Python, with no console window. The server auto-starts with the launcher; the GUI starts
   the server first if needed. If port 8765 is already taken, the existing server is reused.

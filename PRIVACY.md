@@ -1,6 +1,6 @@
 # Privacy Policy — ResumeWriter Launcher
 
-_Last updated: 2026-11-13_
+_Last updated: 2026-11-14_
 
 The ResumeWriter Launcher ("the Launcher") is a small desktop app that installs, runs, updates
 and uninstalls the ResumeWriter application on your computer. This policy explains what the
@@ -21,8 +21,9 @@ It contains:
 - `state.json` (whether ResumeWriter is installed, where, and the installed version);
 - log files (`logs/`) with the output of install, update, server and GUI commands.
 
-Your `.env` file stays in the installation folder on your computer. The Launcher only checks
-whether it exists; it never reads, uploads or shares its contents.
+Your configuration (the `.env` file) is created and edited through the Launcher's Settings screen
+and is stored only in the installation folder on your computer. The Launcher never uploads or
+shares its contents.
 
 Uninstall removes the installation folder. **Delete Launcher** removes all of the above and the
 Launcher itself.
