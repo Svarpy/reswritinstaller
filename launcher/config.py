@@ -42,6 +42,7 @@ BASE_DIR = base_dir()
 INSTALL_DIR = BASE_DIR / APP_DIR_NAME
 STATE_FILE = BASE_DIR / "state.json"
 LOG_DIR = BASE_DIR / "logs"
+SETTINGS_BACKUP = BASE_DIR / "settings-backup.env"  # only exists if user chose "keep settings"
 
 
 def venv_python(code_dir: Path) -> Path:

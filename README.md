@@ -12,7 +12,8 @@ uninstalls [resume-writer-yck](https://github.com/Svarpy/resume-writer-yck).
   venv's Python, with no console window. The server auto-starts with the launcher; the GUI starts
   the server first if needed. If port 8765 is already taken, the existing server is reused.
 - **Update:** fetches `origin/main`, hard-resets to it, refreshes dependencies, restarts the launcher.
-- **Uninstall:** stops everything, deletes the install folder, resets state.
+- **Uninstall:** stops everything, deletes the install folder, resets state. Optional
+  **Keep my settings** saves a private copy of `.env` that prefills Settings after a reinstall.
 - Closing the launcher stops the server and GUI.
 - **Status line:** always shows live Server and GUI state (starting / running / stopped / exited).
 - **Logs:** "Show logs" opens an in-app log viewer (Server, GUI, Install, Update); "Open log file"

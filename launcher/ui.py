@@ -374,18 +374,49 @@ class App(tk.Tk):
         self._show_log("Update")
         self._run_task(work, lambda _: self._restart(), "Updating…")
 
+    def _confirm_uninstall(self):
+        """Themed confirm dialog with a 'keep settings' checkbox. Returns None or keep(bool)."""
+        dlg = tk.Toplevel(self)
+        dlg.title("Uninstall")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        keep = tk.BooleanVar(value=False)
+        result = {"ok": False}
+        body = ttk.Frame(dlg, padding=18)
+        body.pack()
+        ttk.Label(body, wraplength=380, justify="left",
+                  text="Remove ResumeWriter and everything in its install folder?\n"
+                       "This cannot be undone.").pack(anchor="w")
+        ttk.Checkbutton(body, text="Keep my settings (.env) for a future install",
+                        variable=keep).pack(anchor="w", pady=(12, 2))
+        ttk.Label(body, wraplength=380, justify="left", style="Muted.TLabel",
+                  text="A private copy is stored in the launcher's folder and used to prefill "
+                       "Settings next time. It is deleted once you save your settings again, "
+                       "or if you uninstall without this option.").pack(anchor="w")
+        row = ttk.Frame(body)
+        row.pack(fill="x", pady=(16, 0))
+
+        def ok():
+            result["ok"] = True
+            dlg.destroy()
+
+        ttk.Button(row, text="Uninstall", command=ok).pack(side="right")
+        ttk.Button(row, text="Cancel", command=dlg.destroy).pack(side="right", padx=8)
+        dlg.grab_set()
+        self.wait_window(dlg)
+        return keep.get() if result["ok"] else None
+
     def _on_uninstall(self) -> None:
-        if not messagebox.askyesno(
-            "Uninstall", "Remove ResumeWriter and everything in its folder (including your "
-                         ".env)?\nThis cannot be undone.", icon="warning",
-        ):
+        keep = self._confirm_uninstall()
+        if keep is None:
             return
 
         def work():
             self.runner.stop_all()
             if self.runner.server_is_external():
                 self.runner.stop_external_server()
-            installer.uninstall()
+            installer.uninstall(keep_settings=keep)
 
         def done(_):
             self.state_ = state.load()

@@ -29,6 +29,9 @@ class SettingsWindow(tk.Toplevel):
         pairs, source = envfile.load_for_edit(code_dir)
         if source == "env":
             note = "Environment variables for ResumeWriter (stored in its .env file)."
+        elif source == "backup":
+            note = ("Prefilled from the settings you chose to keep when you uninstalled. "
+                    "Review them, then press Save to create your .env.")
         elif source == "example":
             note = ("Prefilled from .env.example — fill in your values, then press Save "
                     "to create your .env.")
@@ -143,6 +146,7 @@ class SettingsWindow(tk.Toplevel):
             return
         try:
             envfile.save(self.code_dir, pairs)
+            envfile.discard_backup()  # the live .env now holds the settings
         except OSError as exc:
             messagebox.showerror("Settings", f"Could not save .env:\n{exc}", parent=self)
             return

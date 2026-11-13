@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Callable, Optional
 
-from . import config, proc, state
+from . import config, envfile, proc, state
 
 Progress = Callable[[str], None]
 
@@ -174,9 +174,15 @@ def update(progress: Progress) -> state.State:
         return state.mark_installed(code_dir, _head_commit(code_dir))
 
 
-def uninstall() -> None:
+def uninstall(keep_settings: bool = False) -> None:
+    """Remove the install. With keep_settings, first copy .env to the launcher's own folder
+    so the next install can prefill Settings from it; otherwise drop any older copy."""
     st = state.load()
     code_dir = Path(st.install_path) if st.install_path else config.INSTALL_DIR
+    if keep_settings:
+        envfile.backup_env(code_dir)  # raises (before deleting anything) if it fails
+    else:
+        envfile.discard_backup()
     # Safety: only ever delete inside the launcher's own directory.
     if config.BASE_DIR.resolve() in code_dir.resolve().parents:
         remove_tree(code_dir)

@@ -3,8 +3,11 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import List, Tuple
+
+from . import config
 
 KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.\-]*$")
 HEADER = "# Managed by ResumeWriter Launcher (Settings)\n"
@@ -68,15 +71,42 @@ def serialize(pairs: Pairs) -> str:
 
 
 def load_for_edit(code_dir: Path) -> Tuple[Pairs, str]:
-    """Pairs to show in the editor and where they came from: 'env', 'example' or 'empty'."""
-    for name, source in ((".env", "env"), (".env.example", "example")):
-        path = code_dir / name
+    """Pairs to show in the editor and where they came from:
+    'env', 'backup' (kept from a previous uninstall), 'example' or 'empty'."""
+    for path, source in (
+        (code_dir / ".env", "env"),
+        (config.SETTINGS_BACKUP, "backup"),
+        (code_dir / ".env.example", "example"),
+    ):
         if path.is_file():
             try:
                 return parse(path.read_text(encoding="utf-8-sig")), source
             except (OSError, UnicodeDecodeError):
                 continue
     return [], "empty"
+
+
+def backup_env(code_dir: Path) -> bool:
+    """Copy <code_dir>/.env to the launcher's own folder (private permissions)."""
+    src = code_dir / ".env"
+    if not src.is_file():
+        return False
+    config.BASE_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, config.SETTINGS_BACKUP)
+    try:
+        os.chmod(config.SETTINGS_BACKUP, 0o600)
+    except OSError:
+        pass
+    return True
+
+
+def discard_backup() -> None:
+    try:
+        config.SETTINGS_BACKUP.unlink()
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
 
 
 def validate(pairs: Pairs) -> str:
