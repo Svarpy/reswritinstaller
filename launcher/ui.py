@@ -11,17 +11,19 @@ from typing import Callable, Optional
 from . import config, installer, proc, selfdelete, state
 from .runner import Runner
 
-# ---- palette ---------------------------------------------------------
-BG = "#16100f"
-PANEL = "#221719"
-TILE = "#2c1a1e"
-TILE_HOVER = "#7a1632"
-ACCENT = "#a3173f"        # burgundy / cherry
-ACCENT_BRIGHT = "#d81e4d"
-FG = "#f1e6e8"
-MUTED = "#a08c90"
-DISABLED_FG = "#6b5a5e"
-OK, WARN, BAD, OFF = "#4fc38a", "#e8a838", "#ff5a70", "#7c6b6f"
+# ---- palette: near-black background, burgundy text, muted-gold accents --------
+BG = "#120d0e"
+PANEL = "#1c1416"
+TILE = "#221719"
+TILE_HOVER = "#2e1b20"
+BORDER = "#4a3a2a"         # dim gold hairline
+ACCENT = "#c8a96a"         # classy muted gold
+ACCENT_BRIGHT = "#e0c68c"
+FG = "#d9566f"             # burgundy text (lightened enough to read on dark)
+FG_LOG = "#e07a90"
+MUTED = "#9c5f6d"
+DISABLED_FG = "#5e3b44"
+OK, WARN, BAD, OFF = "#8fb89a", "#c8a96a", "#f0647c", "#7a6368"
 
 FONT = "Segoe UI"
 LOG_FILES = {"Server": "server.log", "GUI": "gui.log", "Install": "install.log",
@@ -41,34 +43,40 @@ def apply_theme(root: tk.Tk) -> None:
     root.configure(bg=BG)
     s = ttk.Style(root)
     s.theme_use("clam")
-    s.configure(".", background=BG, foreground=FG, fieldbackground=PANEL, bordercolor=BG,
+    s.configure(".", background=BG, foreground=FG, fieldbackground=PANEL, bordercolor=BORDER,
                 lightcolor=BG, darkcolor=BG, troughcolor=PANEL, focuscolor=BG)
     s.configure("TFrame", background=BG)
     s.configure("TLabel", background=BG, foreground=FG)
     s.configure("Muted.TLabel", foreground=MUTED)
-    s.configure("Title.TLabel", font=(FONT, 20, "bold"), foreground=ACCENT_BRIGHT)
-    s.configure("TButton", background=PANEL, foreground=FG, padding=(10, 5), borderwidth=0)
-    s.map("TButton", background=[("active", ACCENT), ("disabled", PANEL)],
-          foreground=[("disabled", DISABLED_FG)])
+    s.configure("Title.TLabel", font=(FONT, 22, "bold"), foreground=ACCENT)
+    s.configure("TButton", background=PANEL, foreground=FG, padding=(10, 5), borderwidth=1,
+                bordercolor=BORDER)
+    s.map("TButton", background=[("active", TILE_HOVER), ("disabled", PANEL)],
+          foreground=[("active", ACCENT), ("disabled", DISABLED_FG)],
+          bordercolor=[("active", ACCENT)])
     s.configure("Tile.TButton", background=TILE, foreground=FG, font=(FONT, 13, "bold"),
-                padding=(10, 26), borderwidth=0)
+                padding=(10, 26), borderwidth=1, bordercolor=BORDER)
     s.map("Tile.TButton",
-          background=[("disabled", PANEL), ("pressed", ACCENT_BRIGHT), ("active", TILE_HOVER)],
-          foreground=[("disabled", DISABLED_FG)])
-    s.configure("Danger.Tile.TButton", background="#3a1219")
+          background=[("disabled", PANEL), ("pressed", BORDER), ("active", TILE_HOVER)],
+          foreground=[("disabled", DISABLED_FG), ("active", ACCENT_BRIGHT)],
+          bordercolor=[("disabled", PANEL), ("active", ACCENT)])
+    s.configure("Danger.Tile.TButton", background="#1f0f12", foreground="#e0586c")
     s.map("Danger.Tile.TButton",
-          background=[("disabled", PANEL), ("pressed", ACCENT_BRIGHT), ("active", "#9b1028")],
-          foreground=[("disabled", DISABLED_FG)])
-    s.configure("Horizontal.TProgressbar", background=ACCENT_BRIGHT, troughcolor=PANEL,
-                bordercolor=PANEL, lightcolor=ACCENT_BRIGHT, darkcolor=ACCENT_BRIGHT)
+          background=[("disabled", PANEL), ("pressed", BORDER), ("active", "#2c1015")],
+          foreground=[("disabled", DISABLED_FG), ("active", "#f0647c")],
+          bordercolor=[("disabled", PANEL), ("active", "#f0647c")])
+    s.configure("Horizontal.TProgressbar", background=ACCENT, troughcolor=PANEL,
+                bordercolor=PANEL, lightcolor=ACCENT, darkcolor=ACCENT)
     s.configure("TEntry", fieldbackground=PANEL, foreground=FG, insertcolor=FG)
     s.configure("TCombobox", fieldbackground=PANEL, background=PANEL, foreground=FG,
-                arrowcolor=FG, selectbackground=PANEL, selectforeground=FG)
+                arrowcolor=ACCENT, selectbackground=PANEL, selectforeground=FG)
     s.map("TCombobox", fieldbackground=[("readonly", PANEL)], foreground=[("readonly", FG)])
     root.option_add("*TCombobox*Listbox.background", PANEL)
     root.option_add("*TCombobox*Listbox.foreground", FG)
-    root.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
-    s.configure("Vertical.TScrollbar", background=PANEL, troughcolor=BG, arrowcolor=FG)
+    root.option_add("*TCombobox*Listbox.selectBackground", BORDER)
+    root.option_add("*TCombobox*Listbox.selectForeground", ACCENT_BRIGHT)
+    s.configure("Vertical.TScrollbar", background=PANEL, troughcolor=BG, arrowcolor=ACCENT,
+                bordercolor=BG)
 
 
 class App(tk.Tk):
@@ -133,10 +141,10 @@ class App(tk.Tk):
         combo.bind("<<ComboboxSelected>>", lambda _e: self._refresh_logs(force=True))
         body = ttk.Frame(self.log_frame)
         body.pack(fill="both", expand=True)
-        self.log_text = tk.Text(body, height=9, bg=PANEL, fg=FG, insertbackground=FG, bd=0,
+        self.log_text = tk.Text(body, height=9, bg=PANEL, fg=FG_LOG, insertbackground=FG, bd=0,
                                 highlightthickness=0, wrap="none", state="disabled",
                                 font=("Consolas" if sys.platform == "win32" else "Menlo", 9),
-                                selectbackground=ACCENT)
+                                selectbackground=BORDER)
         sb = ttk.Scrollbar(body, orient="vertical", command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")

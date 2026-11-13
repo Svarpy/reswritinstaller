@@ -17,7 +17,7 @@ uninstalls [resume-writer-yck](https://github.com/Svarpy/resume-writer-yck).
 - **Delete Launcher** (only shown while ResumeWriter is not installed): removes all launcher data
   (install dir, state, logs) and the launcher itself. On Windows the launcher deletes itself just
   after closing; if it cannot, you are told which file to delete manually.
-- Dark theme with burgundy accents (native message boxes follow the OS theme).
+- Dark theme with burgundy text and muted-gold accents (native message boxes follow the OS theme).
 
 Requires Python 3.10+ on PATH (only needed for the first install).
 
@@ -36,6 +36,8 @@ python -m launcher
 pip install -r requirements-build.txt
 python build/build.py      # -> dist/ResumeWriterLauncher(.exe)
 ```
-PyInstaller cannot cross-compile; `.github/workflows/build.yml` builds Windows, macOS and Linux.
+PyInstaller cannot cross-compile. `.github/workflows/build.yml` builds the Windows `.exe` on a
+Windows runner: pushing a `v*` tag attaches it to a GitHub release; a manual run uploads it as a
+workflow artifact.
 Set `RESUME_LAUNCHER_HOME` to use a different base dir (handy for testing).
 Repo URL, branch and port live in `launcher/config.py`.
