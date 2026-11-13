@@ -1,0 +1,4 @@
+# Runtime dependencies of the launcher itself (pure Python, bundled into the exe).
+dulwich>=0.22
+certifi>=2024.2.2
+urllib3>=2
