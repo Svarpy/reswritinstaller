@@ -34,9 +34,9 @@ pip install -r requirements.txt
 python -m launcher
 
 pip install -r requirements-build.txt
-python build/build.py      # -> dist/ResumeWriterLauncher(.exe)
+python build/build.py      # -> dist/ResumeWriterLauncher/ (one-folder; needed for MSIX/Store)
 ```
-PyInstaller cannot cross-compile. `.github/workflows/build.yml` builds the Windows `.exe` on a
+PyInstaller cannot cross-compile. `.github/workflows/build.yml` builds the Windows `.exe` (one-folder, zipped) on a
 Windows runner: pushing a merge/push to `main` whose commit message contains a version (e.g. `Release v1.0`) also publishes
 a GitHub release; any other push or manual run uploads it as a
 workflow artifact.

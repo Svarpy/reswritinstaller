@@ -23,12 +23,19 @@ def launcher_path() -> Optional[Path]:
     return exe
 
 
+def _onedir_internal(target: Path) -> Optional[Path]:
+    """PyInstaller one-folder builds keep libraries in a sibling `_internal` folder."""
+    internal = target.parent / "_internal"
+    return internal if target.is_file() and internal.is_dir() else None
+
+
 def schedule_delete() -> bool:
     """Delete (or schedule deletion of) the launcher. Returns True if it is gone or will
     be removed once this process exits; False means the user must delete it manually."""
     target = launcher_path()
     if target is None:
         return False
+    internal = _onedir_internal(target)
     try:
         if proc.IS_WIN:
             # A running .exe is locked on Windows: a detached helper retries after we exit.
@@ -41,6 +48,9 @@ def schedule_delete() -> bool:
                 "  ping -n 2 127.0.0.1 >nul\r\n"
                 ")\r\n"
                 ":done\r\n"
+                + (f'rmdir /s /q "{internal}" >nul 2>&1\r\n' if internal else "")
+                + f'rmdir "{target.parent}" >nul 2>&1\r\n'  # only succeeds if now empty
+                +
                 '(goto) 2>nul & del "%~f0"\r\n',
                 encoding="mbcs",
             )
@@ -53,6 +63,12 @@ def schedule_delete() -> bool:
             shutil.rmtree(target)
         else:
             os.remove(target)  # unlinking a running binary is fine on POSIX
+            if internal:
+                shutil.rmtree(internal)
+            try:
+                target.parent.rmdir()  # only if now empty
+            except OSError:
+                pass
         return not target.exists()
     except OSError:
         return False
