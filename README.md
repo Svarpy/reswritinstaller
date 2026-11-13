@@ -37,7 +37,8 @@ pip install -r requirements-build.txt
 python build/build.py      # -> dist/ResumeWriterLauncher(.exe)
 ```
 PyInstaller cannot cross-compile. `.github/workflows/build.yml` builds the Windows `.exe` on a
-Windows runner: pushing a `v*` tag attaches it to a GitHub release; a manual run uploads it as a
+Windows runner: pushing a merge/push to `main` whose commit message contains a version (e.g. `Release v1.0`) also publishes
+a GitHub release; any other push or manual run uploads it as a
 workflow artifact.
 Set `RESUME_LAUNCHER_HOME` to use a different base dir (handy for testing).
 Repo URL, branch and port live in `launcher/config.py`.
