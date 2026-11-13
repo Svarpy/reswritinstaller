@@ -1,4 +1,6 @@
-"""Build the single-file launcher: `python build/build.py` (run on each target OS)."""
+"""Build the single-file launcher: `python build/build.py` (run on each target OS).
+
+Output: dist/ResumeWriterLauncher(.exe)."""
 import subprocess
 import sys
 from pathlib import Path

@@ -8,24 +8,13 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Callable, Optional
 
-from . import config, installer, proc, selfdelete, state
+from . import config, installer, proc, state
+from .settings import SettingsWindow
 from .runner import Runner
 
-# ---- palette: near-black background, burgundy text, muted-gold accents --------
-BG = "#120d0e"
-PANEL = "#1c1416"
-TILE = "#221719"
-TILE_HOVER = "#2e1b20"
-BORDER = "#4a3a2a"         # dim gold hairline
-ACCENT = "#c8a96a"         # classy muted gold
-ACCENT_BRIGHT = "#e0c68c"
-FG = "#d9566f"             # burgundy text (lightened enough to read on dark)
-FG_LOG = "#e07a90"
-MUTED = "#9c5f6d"
-DISABLED_FG = "#5e3b44"
-OK, WARN, BAD, OFF = "#8fb89a", "#c8a96a", "#f0647c", "#7a6368"
+from .theme import (ACCENT, ACCENT_BRIGHT, BAD, BG, BORDER, FG, FG_LOG, FONT, MUTED, OFF, OK,
+                    PANEL, WARN, apply_theme)
 
-FONT = "Segoe UI"
 LOG_FILES = {"Server": "server.log", "GUI": "gui.log", "Install": "install.log",
              "Update": "update.log"}
 
@@ -38,45 +27,6 @@ GUI_TEXT = {
     "running": ("running", OK), "exited": ("exited — see logs", BAD), "stopped": ("stopped", OFF),
 }
 
-
-def apply_theme(root: tk.Tk) -> None:
-    root.configure(bg=BG)
-    s = ttk.Style(root)
-    s.theme_use("clam")
-    s.configure(".", background=BG, foreground=FG, fieldbackground=PANEL, bordercolor=BORDER,
-                lightcolor=BG, darkcolor=BG, troughcolor=PANEL, focuscolor=BG)
-    s.configure("TFrame", background=BG)
-    s.configure("TLabel", background=BG, foreground=FG)
-    s.configure("Muted.TLabel", foreground=MUTED)
-    s.configure("Title.TLabel", font=(FONT, 22, "bold"), foreground=ACCENT)
-    s.configure("TButton", background=PANEL, foreground=FG, padding=(10, 5), borderwidth=1,
-                bordercolor=BORDER)
-    s.map("TButton", background=[("active", TILE_HOVER), ("disabled", PANEL)],
-          foreground=[("active", ACCENT), ("disabled", DISABLED_FG)],
-          bordercolor=[("active", ACCENT)])
-    s.configure("Tile.TButton", background=TILE, foreground=FG, font=(FONT, 13, "bold"),
-                padding=(10, 26), borderwidth=1, bordercolor=BORDER)
-    s.map("Tile.TButton",
-          background=[("disabled", PANEL), ("pressed", BORDER), ("active", TILE_HOVER)],
-          foreground=[("disabled", DISABLED_FG), ("active", ACCENT_BRIGHT)],
-          bordercolor=[("disabled", PANEL), ("active", ACCENT)])
-    s.configure("Danger.Tile.TButton", background="#1f0f12", foreground="#e0586c")
-    s.map("Danger.Tile.TButton",
-          background=[("disabled", PANEL), ("pressed", BORDER), ("active", "#2c1015")],
-          foreground=[("disabled", DISABLED_FG), ("active", "#f0647c")],
-          bordercolor=[("disabled", PANEL), ("active", "#f0647c")])
-    s.configure("Horizontal.TProgressbar", background=ACCENT, troughcolor=PANEL,
-                bordercolor=PANEL, lightcolor=ACCENT, darkcolor=ACCENT)
-    s.configure("TEntry", fieldbackground=PANEL, foreground=FG, insertcolor=FG)
-    s.configure("TCombobox", fieldbackground=PANEL, background=PANEL, foreground=FG,
-                arrowcolor=ACCENT, selectbackground=PANEL, selectforeground=FG)
-    s.map("TCombobox", fieldbackground=[("readonly", PANEL)], foreground=[("readonly", FG)])
-    root.option_add("*TCombobox*Listbox.background", PANEL)
-    root.option_add("*TCombobox*Listbox.foreground", FG)
-    root.option_add("*TCombobox*Listbox.selectBackground", BORDER)
-    root.option_add("*TCombobox*Listbox.selectForeground", ACCENT_BRIGHT)
-    s.configure("Vertical.TScrollbar", background=PANEL, troughcolor=BG, arrowcolor=ACCENT,
-                bordercolor=BG)
 
 
 class App(tk.Tk):
@@ -108,6 +58,8 @@ class App(tk.Tk):
                 sys.exit(1)
 
         ttk.Label(self, text="ResumeWriter", style="Title.TLabel").pack(pady=(16, 4))
+        self.gear = ttk.Button(self, text="\u2699", style="Icon.TButton", width=3,
+                               command=lambda: self._open_settings())
         self.tile_frame = ttk.Frame(self)
         self.tile_frame.pack(fill="both", expand=True, padx=20, pady=8)
 
@@ -165,11 +117,13 @@ class App(tk.Tk):
             f.columnconfigure(i, weight=1, uniform="c")
             f.rowconfigure(i, weight=1, uniform="r")
         if not self.state_.installed:
+            self.gear.place_forget()
             self._tile("install", "Install", self._on_install, 0, 0)
-            self._tile("delete", "Delete Launcher", self._on_delete_launcher, 0, 1, danger=True)
+            self._tiles["install"].grid_configure(columnspan=2, rowspan=2)
             self._set_status("ResumeWriter is not installed.")
             self._update_tiles()
             return
+        self.gear.place(relx=1.0, x=-12, y=12, anchor="ne")
         self._tile("server", "Run Server", self._on_server, 0, 0)
         self._tile("gui", "Run GUI", self._on_gui, 0, 1)
         self._tile("update", "Update", self._on_update, 1, 0)
@@ -187,7 +141,7 @@ class App(tk.Tk):
         self.activity.config(text=text)
 
     def _update_tiles(self) -> None:
-        for b in self._tiles.values():
+        for b in (*self._tiles.values(), self.gear):
             b.state(["disabled"] if self._busy else ["!disabled"])
         if not self.runner:
             self.server_lbl.config(text="")
@@ -307,7 +261,7 @@ class App(tk.Tk):
             return
         self._activate()
         if not installer.env_present(self.state_.code_dir):
-            self._env_dialog(self._autostart_server)
+            self._open_settings(first_run=True)
         else:
             self._autostart_server()
 
@@ -321,7 +275,7 @@ class App(tk.Tk):
             self.runner.start_server()  # no-op if already running or port is taken
             self._update_tiles()
 
-    # ---- install / delete launcher -----------------------------------
+    # ---- install ------------------------------------------------------
     def _on_install(self) -> None:
         self._show_log("Install")
         self._run_task(lambda: installer.install(self._progress), self._installed, "Installing…")
@@ -330,82 +284,31 @@ class App(tk.Tk):
         self.state_ = st
         self._activate()
         self._show_log("Server")
-        self._env_dialog(lambda: (self._build_tiles(), self._autostart_server()))
+        self._build_tiles()
+        self._open_settings(first_run=True)
 
-    def _on_delete_launcher(self) -> None:
-        target = selfdelete.launcher_path()
-        extra = (f"\n\nLauncher file:\n{target}" if target else
-                 "\n\n(Running from source: the launcher file itself will not be deleted.)")
-        if not messagebox.askyesno(
-            "Delete Launcher",
-            "This removes all ResumeWriter data (installation folder, state, logs) and the "
-            f"launcher itself.\nThis cannot be undone.{extra}\n\nContinue?",
-            icon="warning",
-        ):
+    def _open_settings(self, first_run: bool = False) -> None:
+        if not self.state_.installed or getattr(self, "_settings_open", False):
             return
-        self._run_task(installer.delete_all_data, lambda _: self._finish_delete(),
-                       "Deleting everything…")
+        self._settings_open = True
+        had_env = installer.env_present(self.state_.code_dir)
 
-    def _finish_delete(self) -> None:
-        if selfdelete.launcher_path() is None:
-            messagebox.showinfo("Deleted", "All ResumeWriter data was removed.")
-        elif selfdelete.schedule_delete():
-            messagebox.showinfo(
-                "Deleted", "All ResumeWriter data was removed. The launcher will delete itself "
-                          "as it closes.")
-        else:
-            messagebox.showinfo(
-                "Almost done",
-                "All ResumeWriter data was removed, but the launcher could not delete itself.\n\n"
-                f"Please delete it manually:\n{selfdelete.launcher_path()}")
-        self.destroy()
-
-    def _env_dialog(self, on_finish: Callable[[], None]) -> None:
-        code_dir = self.state_.code_dir
-        dlg = tk.Toplevel(self)
-        dlg.title("Add your .env file")
-        dlg.configure(bg=BG)
-        dlg.transient(self)
-        dlg.resizable(False, False)
-        body = ttk.Frame(dlg, padding=18)
-        body.pack()
-        ttk.Label(
-            body, wraplength=440, justify="left",
-            text="ResumeWriter is installed. Copy your .env file into the folder below "
-                 "(replacing any existing one). Note: .env.example is not enough — "
-                 "the file must be named .env.",
-        ).pack(anchor="w")
-        path_var = tk.StringVar(value=str(code_dir))
-        ttk.Entry(body, textvariable=path_var, state="readonly", width=62).pack(fill="x", pady=10)
-        status = tk.Label(body, bg=BG, fg=MUTED)
-        status.pack(anchor="w")
-        row = ttk.Frame(body)
-        row.pack(fill="x", pady=(12, 0))
-        ttk.Button(row, text="Open folder", command=lambda: proc.open_path(code_dir)).pack(
-            side="left")
-
-        def finish():
-            if not installer.env_present(code_dir):
-                if not messagebox.askyesno(
-                    "No .env found", "No .env file was found yet. Finish anyway?", parent=dlg
-                ):
-                    return
-            dlg.destroy()
-            on_finish()
-
-        ttk.Button(row, text="Finish", command=finish).pack(side="right")
-        dlg.protocol("WM_DELETE_WINDOW", finish)
-
-        def check():
-            if not dlg.winfo_exists():
+        def closed(saved: bool) -> None:
+            self._settings_open = False
+            if not self.runner:
                 return
-            ok = installer.env_present(code_dir)
-            status.config(text=".env found ✓" if ok else ".env not found yet",
-                          fg=OK if ok else WARN)
-            dlg.after(1000, check)
+            sv = self.runner.server_state()
+            if saved and sv in ("running", "starting"):
+                messagebox.showinfo("Settings saved",
+                                    "Saved. Restart the server for the changes to take effect.")
+            elif installer.env_present(self.state_.code_dir) and (
+                not had_env or sv == "exited"
+            ):
+                self._autostart_server()
+            elif first_run and not installer.env_present(self.state_.code_dir):
+                self._set_status("No .env yet — open Settings (⚙) to add your configuration.")
 
-        check()
-        dlg.grab_set()
+        SettingsWindow(self, self.state_.code_dir, first_run, closed)
 
     # ---- server / gui ------------------------------------------------
     def _on_server(self) -> None:
@@ -471,18 +374,49 @@ class App(tk.Tk):
         self._show_log("Update")
         self._run_task(work, lambda _: self._restart(), "Updating…")
 
+    def _confirm_uninstall(self):
+        """Themed confirm dialog with a 'keep settings' checkbox. Returns None or keep(bool)."""
+        dlg = tk.Toplevel(self)
+        dlg.title("Uninstall")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        keep = tk.BooleanVar(value=False)
+        result = {"ok": False}
+        body = ttk.Frame(dlg, padding=18)
+        body.pack()
+        ttk.Label(body, wraplength=380, justify="left",
+                  text="Remove ResumeWriter and everything in its install folder?\n"
+                       "This cannot be undone.").pack(anchor="w")
+        ttk.Checkbutton(body, text="Keep my settings (.env) for a future install",
+                        variable=keep).pack(anchor="w", pady=(12, 2))
+        ttk.Label(body, wraplength=380, justify="left", style="Muted.TLabel",
+                  text="A private copy is stored in the launcher's folder and used to prefill "
+                       "Settings next time. It is deleted once you save your settings again, "
+                       "or if you uninstall without this option.").pack(anchor="w")
+        row = ttk.Frame(body)
+        row.pack(fill="x", pady=(16, 0))
+
+        def ok():
+            result["ok"] = True
+            dlg.destroy()
+
+        ttk.Button(row, text="Uninstall", command=ok).pack(side="right")
+        ttk.Button(row, text="Cancel", command=dlg.destroy).pack(side="right", padx=8)
+        dlg.grab_set()
+        self.wait_window(dlg)
+        return keep.get() if result["ok"] else None
+
     def _on_uninstall(self) -> None:
-        if not messagebox.askyesno(
-            "Uninstall", "Remove ResumeWriter and everything in its folder (including your "
-                         ".env)?\nThis cannot be undone.", icon="warning",
-        ):
+        keep = self._confirm_uninstall()
+        if keep is None:
             return
 
         def work():
             self.runner.stop_all()
             if self.runner.server_is_external():
                 self.runner.stop_external_server()
-            installer.uninstall()
+            installer.uninstall(keep_settings=keep)
 
         def done(_):
             self.state_ = state.load()
