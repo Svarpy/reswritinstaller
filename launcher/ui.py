@@ -105,7 +105,14 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._build_tiles()
         self.after(300, self._startup)
-        self.after(500, self._poll)
+        self._poll_id = self.after(500, self._poll)
+
+    def destroy(self) -> None:
+        try:
+            self.after_cancel(self._poll_id)
+        except (AttributeError, tk.TclError):
+            pass
+        super().destroy()
 
     # ---- layout ------------------------------------------------------
     def _build_tiles(self) -> None:
@@ -167,7 +174,7 @@ class App(tk.Tk):
         self._update_tiles()
         if self._logs_visible:
             self._refresh_logs()
-        self.after(1000, self._poll)
+        self._poll_id = self.after(1000, self._poll)
 
     # ---- logs --------------------------------------------------------
     def _log_path(self):
@@ -258,6 +265,10 @@ class App(tk.Tk):
     # ---- startup -----------------------------------------------------
     def _startup(self) -> None:
         if not self.state_.installed:
+            if config.AUTO_INSTALL_ON_FIRST_RUN and not self.state_.auto_install_attempted:
+                state.mark_auto_install_attempted()  # at most once, even if it fails
+                self.state_.auto_install_attempted = True
+                self._on_install()
             return
         self._activate()
         if not installer.env_present(self.state_.code_dir):

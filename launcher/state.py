@@ -14,6 +14,9 @@ class State:
     installed: bool = False
     install_path: str = ""
     commit: str = ""
+    # True once the automatic first-run install has been tried, so it never repeats
+    # (e.g. after the user uninstalls on purpose, or an auto-install fails).
+    auto_install_attempted: bool = False
 
     @property
     def code_dir(self) -> Path:
@@ -37,18 +40,25 @@ def load() -> State:
     if state.installed:
         code = state.code_dir
         if not (code.is_dir() and config.venv_python(code).exists()):
-            state = State()
+            state = State(auto_install_attempted=state.auto_install_attempted)
             _write(state)
     return state
 
 
+def mark_auto_install_attempted() -> None:
+    current = load()
+    current.auto_install_attempted = True
+    _write(current)
+
+
 def mark_installed(code_dir: Path, commit: str = "") -> State:
-    state = State(installed=True, install_path=str(code_dir), commit=commit)
+    state = State(installed=True, install_path=str(code_dir), commit=commit,
+                  auto_install_attempted=True)
     _write(state)
     return state
 
 
 def mark_uninstalled() -> State:
-    state = State()
+    state = State(auto_install_attempted=True)  # an uninstall is deliberate: never auto-reinstall
     _write(state)
     return state

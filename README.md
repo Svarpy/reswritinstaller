@@ -35,12 +35,23 @@ pip install -r requirements.txt
 python -m launcher
 
 pip install -r requirements-build.txt
-python build/build.py      # -> dist/ResumeWriterLauncher(.exe)
+python build/build.py      # -> dist/ResumeWriterLauncher/ (one-folder)
+python packaging/msix/build_msix.py --version 1.0.0.0   # -> dist/ResumeWriterLauncher.msix (Windows SDK)
 ```
-PyInstaller cannot cross-compile. `.github/workflows/build.yml` builds the Windows `.exe` on a
-Windows runner: pushing a merge/push to `main` whose commit message contains a version (e.g. `Release v1.0`) also publishes
-a GitHub release; any other push or manual run uploads it as a
-workflow artifact.
+PyInstaller cannot cross-compile. `.github/workflows/build.yml` runs on a Windows runner for every
+push to `main` and produces a zipped one-folder build plus an **unsigned `.msix`** for the Microsoft
+Store (the Store signs it). If the head commit message contains a version (e.g. `Release v1.0`) the
+same run also publishes a GitHub release with both files. Manual runs only upload artifacts.
+
+**Store setup:** in the repo's *Settings → Secrets and variables → Actions → Variables* set
+`MSIX_IDENTITY_NAME`, `MSIX_PUBLISHER` (e.g. `CN=...` exactly as in Partner Center),
+`MSIX_PUBLISHER_DISPLAY_NAME` and optionally `MSIX_DISPLAY_NAME`. Replace the placeholder logos in
+`packaging/msix/Assets/`. Without the variables the package gets placeholder identity values and is
+only good for local testing.
+
+**First run:** the launcher installs ResumeWriter automatically the first time it opens (once; see
+`AUTO_INSTALL_ON_FIRST_RUN` in `launcher/config.py`), so a Store install needs no extra click.
+After an Uninstall it never reinstalls on its own.
 Set `RESUME_LAUNCHER_HOME` to use a different base dir (handy for testing).
 Repo URL, branch and port live in `launcher/config.py`.
 
