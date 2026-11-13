@@ -44,7 +44,7 @@ def main() -> None:
     ap.add_argument("--publisher", default=os.environ.get("MSIX_PUBLISHER") or "CN=ResumeWriter")
     ap.add_argument("--publisher-display-name",
                     default=os.environ.get("MSIX_PUBLISHER_DISPLAY_NAME") or "ResumeWriter")
-    ap.add_argument("--display-name", default=os.environ.get("MSIX_DISPLAY_NAME") or "ResumeWriter Launcher")
+    ap.add_argument("--display-name", default=os.environ.get("MSIX_DISPLAY_NAME") or "ResWritLauncher")
     ap.add_argument("--skip-pack", action="store_true", help="only stage files (for testing)")
     args = ap.parse_args()
 
