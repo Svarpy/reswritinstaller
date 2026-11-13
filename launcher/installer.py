@@ -185,3 +185,11 @@ def uninstall() -> None:
 
 def env_present(code_dir: Path) -> bool:
     return (code_dir / ".env").is_file()
+
+
+def delete_all_data() -> None:
+    """Remove everything the launcher owns: install dir, state, logs."""
+    base = config.BASE_DIR.resolve()
+    if len(base.parts) < 3:  # refuse to ever wipe a root-like path
+        raise RuntimeError(f"Refusing to delete unsafe path: {base}")
+    remove_tree(base)

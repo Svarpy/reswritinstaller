@@ -11,6 +11,13 @@ uninstalls [resume-writer-yck](https://github.com/Svarpy/resume-writer-yck).
 - **Update:** fetches `origin/main`, hard-resets to it, refreshes dependencies, restarts the launcher.
 - **Uninstall:** stops everything, deletes the install folder, resets state.
 - Closing the launcher stops the server and GUI.
+- **Status line:** always shows live Server and GUI state (starting / running / stopped / exited).
+- **Logs:** "Show logs" opens an in-app log viewer (Server, GUI, Install, Update); "Open log file"
+  opens the selected file in your default editor.
+- **Delete Launcher** (only shown while ResumeWriter is not installed): removes all launcher data
+  (install dir, state, logs) and the launcher itself. On Windows the launcher deletes itself just
+  after closing; if it cannot, you are told which file to delete manually.
+- Dark theme with burgundy accents (native message boxes follow the OS theme).
 
 Requires Python 3.10+ on PATH (only needed for the first install).
 

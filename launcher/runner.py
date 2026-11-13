@@ -15,12 +15,14 @@ class Runner:
         self.venv_dir = code_dir / ".venv"
         self.python = config.venv_python(code_dir)
         self._procs: Dict[str, subprocess.Popen] = {}
+        self.exit_codes: Dict[str, int] = {}  # unexpected exits (not user-initiated stops)
         self._job = proc.make_kill_on_close_job()
 
     # ---- state -------------------------------------------------------
     def _alive(self, name: str) -> bool:
         p = self._procs.get(name)
         if p is not None and p.poll() is not None:
+            self.exit_codes[name] = p.returncode
             del self._procs[name]
             return False
         return p is not None
@@ -38,9 +40,24 @@ class Runner:
     def gui_running(self) -> bool:
         return self._alive("gui")
 
+    def server_state(self) -> str:
+        """'running' | 'starting' | 'external' | 'exited' | 'stopped'."""
+        if self._alive("server"):
+            return "running" if self.server_port_open() else "starting"
+        if self.server_port_open():
+            return "external"
+        return "exited" if "server" in self.exit_codes else "stopped"
+
+    def gui_state(self) -> str:
+        """'running' | 'exited' | 'stopped'."""
+        if self._alive("gui"):
+            return "running"
+        return "exited" if "gui" in self.exit_codes else "stopped"
+
     # ---- start / stop ------------------------------------------------
     def _start(self, name: str, module: str) -> None:
         config.LOG_DIR.mkdir(parents=True, exist_ok=True)
+        self.exit_codes.pop(name, None)
         log = open(config.LOG_DIR / f"{name}.log", "ab")
         log.write(f"\n--- starting python -m {module} ---\n".encode())
         log.flush()
