@@ -25,8 +25,8 @@ Your configuration (the `.env` file) is created and edited through the Launcher'
 and is stored only in the installation folder on your computer. The Launcher never uploads or
 shares its contents.
 
-Uninstall removes the installation folder. **Delete Launcher** removes all of the above and the
-Launcher itself.
+Uninstall removes the installation folder (including your `.env`). To remove the rest (`state.json`
+and logs), delete the folder listed above.
 
 ## Network connections the Launcher makes
 Only when you click Install or Update, the Launcher connects to:

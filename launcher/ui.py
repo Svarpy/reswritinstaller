@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Callable, Optional
 
-from . import config, installer, proc, selfdelete, state
+from . import config, installer, proc, state
 from .settings import SettingsWindow
 from .runner import Runner
 
@@ -119,7 +119,7 @@ class App(tk.Tk):
         if not self.state_.installed:
             self.gear.place_forget()
             self._tile("install", "Install", self._on_install, 0, 0)
-            self._tile("delete", "Delete Launcher", self._on_delete_launcher, 0, 1, danger=True)
+            self._tiles["install"].grid_configure(columnspan=2, rowspan=2)
             self._set_status("ResumeWriter is not installed.")
             self._update_tiles()
             return
@@ -286,34 +286,6 @@ class App(tk.Tk):
         self._show_log("Server")
         self._build_tiles()
         self._open_settings(first_run=True)
-
-    def _on_delete_launcher(self) -> None:
-        target = selfdelete.launcher_path()
-        extra = (f"\n\nLauncher file:\n{target}" if target else
-                 "\n\n(Running from source: the launcher file itself will not be deleted.)")
-        if not messagebox.askyesno(
-            "Delete Launcher",
-            "This removes all ResumeWriter data (installation folder, state, logs) and the "
-            f"launcher itself.\nThis cannot be undone.{extra}\n\nContinue?",
-            icon="warning",
-        ):
-            return
-        self._run_task(installer.delete_all_data, lambda _: self._finish_delete(),
-                       "Deleting everything…")
-
-    def _finish_delete(self) -> None:
-        if selfdelete.launcher_path() is None:
-            messagebox.showinfo("Deleted", "All ResumeWriter data was removed.")
-        elif selfdelete.schedule_delete():
-            messagebox.showinfo(
-                "Deleted", "All ResumeWriter data was removed. The launcher will delete itself "
-                          "as it closes.")
-        else:
-            messagebox.showinfo(
-                "Almost done",
-                "All ResumeWriter data was removed, but the launcher could not delete itself.\n\n"
-                f"Please delete it manually:\n{selfdelete.launcher_path()}")
-        self.destroy()
 
     def _open_settings(self, first_run: bool = False) -> None:
         if not self.state_.installed or getattr(self, "_settings_open", False):
