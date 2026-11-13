@@ -265,10 +265,6 @@ class App(tk.Tk):
     # ---- startup -----------------------------------------------------
     def _startup(self) -> None:
         if not self.state_.installed:
-            if config.AUTO_INSTALL_ON_FIRST_RUN and not self.state_.auto_install_attempted:
-                state.mark_auto_install_attempted()  # at most once, even if it fails
-                self.state_.auto_install_attempted = True
-                self._on_install()
             return
         self._activate()
         if not installer.env_present(self.state_.code_dir):

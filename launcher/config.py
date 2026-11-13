@@ -12,9 +12,6 @@ REPO_URL = "https://github.com/Svarpy/resume-writer-yck.git"
 BRANCH = "main"
 APP_DIR_NAME = "resume-writer-yck"
 
-# On the very first launch, install ResumeWriter automatically (no Install click).
-AUTO_INSTALL_ON_FIRST_RUN = True
-
 # Matches `requires-python` of the resume-writer project.
 MIN_PYTHON = (3, 10)
 

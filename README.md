@@ -49,9 +49,6 @@ same run also publishes a GitHub release with both files. Manual runs only uploa
 `packaging/msix/Assets/`. Without the variables the package gets placeholder identity values and is
 only good for local testing.
 
-**First run:** the launcher installs ResumeWriter automatically the first time it opens (once; see
-`AUTO_INSTALL_ON_FIRST_RUN` in `launcher/config.py`), so a Store install needs no extra click.
-After an Uninstall it never reinstalls on its own.
 Set `RESUME_LAUNCHER_HOME` to use a different base dir (handy for testing).
 Repo URL, branch and port live in `launcher/config.py`.
 
