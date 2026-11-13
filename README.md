@@ -42,3 +42,6 @@ a GitHub release; any other push or manual run uploads it as a
 workflow artifact.
 Set `RESUME_LAUNCHER_HOME` to use a different base dir (handy for testing).
 Repo URL, branch and port live in `launcher/config.py`.
+
+## Privacy
+See [PRIVACY.md](PRIVACY.md). The launcher collects no data and has no telemetry.
