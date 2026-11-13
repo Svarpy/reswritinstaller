@@ -1,0 +1,43 @@
+name: Build Windows launcher
+
+# One run per push/merge to main. If the head commit message contains a version like
+# "v1.0" (e.g. merge commit "Release v1.0"), that same run also publishes a GitHub release.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:     # manual run from the Actions tab (artifact only, no release)
+
+permissions:
+  contents: write        # needed to create the release/tag
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect release version in commit message
+        id: ver
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          msg="$(git log -1 --format=%B)"
+          ver="$(printf '%s' "$msg" | grep -oE '\bv[0-9]+\.[0-9]+(\.[0-9]+)?\b' | head -n1 || true)"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          echo "Detected version: '${ver:-none}'"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-build.txt
+      - run: python build/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ResumeWriterLauncher-windows
+          path: dist/ResumeWriterLauncher.exe
+      - name: Publish release
+        if: steps.ver.outputs.version != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: ResumeWriter Launcher ${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          files: dist/ResumeWriterLauncher.exe
