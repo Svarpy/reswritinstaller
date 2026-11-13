@@ -275,7 +275,7 @@ class App(tk.Tk):
             self.runner.start_server()  # no-op if already running or port is taken
             self._update_tiles()
 
-    # ---- install / delete launcher -----------------------------------
+    # ---- install ------------------------------------------------------
     def _on_install(self) -> None:
         self._show_log("Install")
         self._run_task(lambda: installer.install(self._progress), self._installed, "Installing…")
